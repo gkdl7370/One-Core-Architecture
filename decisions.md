@@ -1,6 +1,6 @@
 # Architecture Decisions
 
-이 문서는 **One-Core Architecture**를 설계하면서 내린 주요 기술적 의사결정과 그 배경을 기록합니다.
+이 문서는 **One-Core Architecture**를 설계하면서 내린 주요 기술적 의사결정과 그 배경을 기록합니다.  
 "왜 이 선택을 했는가"를 명확히 설명하는 것을 목표로 합니다.
 
 ---
@@ -161,3 +161,37 @@
 
 이 문서의 목적은 "정답"을 제시하는 것이 아니라,
 **상황에 맞는 합리적인 선택과 그 근거를 설명하는 것**입니다.
+
+## 🧩 Domain Model (Minimal Example)
+
+본 프로젝트는 도메인을 시스템의 중심(One Core)으로 두는 구조를 검증하기 위해  
+**의도적으로 1~2개의 핵심 도메인만 구현**했습니다.  
+비즈니스 규칙은 서비스나 컨트롤러가 아닌 도메인 내부에만 존재하며 외부 연동과 확장은 이벤트 기반으로 분리됩니다.
+
+```java
+// Aggregate Root
+public class Order {
+
+    private final OrderId id;
+    private OrderStatus status;
+
+    public Order(OrderId id) {
+        this.id = id;
+        this.status = OrderStatus.CREATED;
+        DomainEvents.raise(new OrderCreatedEvent(id));
+    }
+
+    public void complete() {
+        this.status = OrderStatus.COMPLETED;
+        DomainEvents.raise(new OrderCompletedEvent(id));
+    }
+}
+// Domain Event
+public class OrderCompletedEvent {
+
+    private final OrderId orderId;
+
+    public OrderCompletedEvent(OrderId orderId) {
+        this.orderId = orderId;
+    }
+}
