@@ -1,194 +1,127 @@
-# Architecture Decisions
+# 🏛 Architecture Implementation Records (ADR 예시)
 
-이 문서는 **One-Core Architecture**를 설계하면서 내린 주요 기술적 의사결정과 그 배경을 기록합니다.  
-"왜 이 선택을 했는가"를 명확히 설명하는 것을 목표로 합니다.
-
----
-
-## 1. 왜 단일 도메인 코어(One Core) 아키텍처인가?
-
-### 배경 (Problem)
-
-* 현업 환경에서는 기존 레거시 시스템과 조직 구조로 인해
-
-  * 모든 시스템을 전면 재설계하거나
-  * 인프라/아키텍처를 급진적으로 변경하는 것이 현실적으로 불가능
-* 그 결과, 부분적인 개선만 반복되며 구조적 병목은 계속 누적됨
-
-### 개인적 제약과 접근 방식
-
-* 현업 제약 속에서 **"지금 당장 적용 가능한 최선의 구조"**를 고민
-* 이상적인 MSA가 아닌, 점진적으로 적용 가능한 아키텍처를 목표로 설정
-* 실제 적용 가능성을 기준으로 아키텍처를 학습·비교·검증
-
-### 고려한 대안
-
-* 시스템별 독립 유지 (현상 유지)
-* MSA 기반 완전 분리 (이상적이지만 현실적 제약 큼)
-
-### 선택 이유 (Decision)
-
-* 핵심 비즈니스 규칙만이라도 단일 도메인 코어로 통합하여
-
-  * 구조적 병목을 최소 단위에서부터 해소
-  * 기존 시스템은 어댑터 형태로 점진적 전환 가능
-* 현업 제약 하에서도 적용 가능한 현실적인 대안이라고 판단
-
-### 결과 (Consequence)
-
-* 전면 재구축 없이도 도메인 일관성 확보
-* 점진적 개선이 가능한 구조적 기반 마련
-* 향후 조직·시스템 성숙도에 따라 MSA로 확장 가능
+본 문서는 README에 기술된 **One-Core Architecture**의 핵심 의사결정 4가지가 실제 코드(How)로 어떻게 구현되었는지 증명하는 최소 구현 예시
 
 ---
 
-## 2. 왜 Domain-Driven Design(DDD)를 도입했는가?
+## 1. Anti-Corruption Layer (이기종 데이터 정규화)
 
-### 배경 (Problem)
-
-* 기존 구조는 CRUD 중심으로 구성되어
-
-  * 비즈니스 규칙이 서비스/컨트롤러에 분산
-  * 도메인 로직의 책임이 불분명
-
-### 고려한 대안
-
-* 전통적인 Layered Architecture
-* Transaction Script 패턴
-
-### 선택 이유 (Decision)
-
-* 비즈니스 규칙을 코드 구조로 명확히 표현하기 위함
-* 도메인을 중심으로 한 설계로 유지보수성 확보
-* 기술보다 도메인 언어(Ubiquitous Language)를 우선
-
-### 결과 (Consequence)
-
-* 도메인 로직의 응집도 향상
-* 신규 요구사항 반영 시 영향 범위 예측 가능
-
----
-
-## 3. 왜 Event-Driven 아키텍처를 선택했는가?
-
-### 배경 (Problem)
-
-* 동기 연동 방식으로 인해
-
-  * 외부 시스템 장애가 내부 장애로 전파
-  * 트래픽 스파이크 시 스레드 고갈 발생
-
-### 고려한 대안
-
-* 동기 REST 연동 유지
-* 메시지 큐 기반 비동기 처리
-
-### 선택 이유 (Decision)
-
-* Core 도메인의 안정성을 최우선으로 보호
-* 상태 변경을 이벤트로 표현하여 느슨한 결합 유지
-* 장애 격리 및 비동기 확장성 확보
-
-### 결과 (Consequence)
-
-* 외부 시스템 장애가 Core에 영향을 주지 않음
-* 트래픽 증가 시에도 안정적인 처리 가능
-
----
-
-## 4. 왜 Redis Pub/Sub을 메시지 브로커로 선택했는가?
-
-### 배경 (Problem)
-
-* 이벤트 발행이 필요하지만
-
-  * 메시지 순서 보장 불필요
-  * At-Least-Once / Exactly-Once 요구사항 없음
-
-### 고려한 대안
-
-* Kafka
-* RabbitMQ
-
-### 선택 이유 (Decision)
-
-* 운영 복잡도와 비용을 최소화하기 위함
-* 이미 Redis를 캐시 용도로 사용 중
-* 단순 이벤트 전달 목적에 충분한 성능 제공
-
-### 적용 범위
-
-* 메시지 순서 보장이 필요 없는 도메인 이벤트
-* 재처리가 필요 없는 비핵심 이벤트
-
-### 결과 (Consequence)
-
-* 빠른 도입과 단순한 운영 구조
-* 메시징 인프라 관리 부담 감소
-
----
-
-## 5. 왜 Hexagonal Architecture (Ports & Adapters)를 적용했는가?
-
-### 배경 (Problem)
-
-* 프레임워크 및 외부 시스템 의존성이 도메인에 침투
-* 테스트 어려움 및 교체 비용 증가
-
-### 선택 이유 (Decision)
-
-* 도메인을 외부 환경으로부터 격리
-* DB, 메시지 브로커, 외부 연동을 어댑터로 분리
-
-### 결과 (Consequence)
-
-* 도메인 단위 테스트 용이
-* 인프라 교체 시 영향 최소화
-
----
-
-## 6. 이 아키텍처의 한계와 트레이드오프
-
-* 단일 코어는 초기에는 병목 지점이 될 수 있음
-* 모든 도메인이 이벤트로만 해결되지는 않음
-* 복잡한 분산 트랜잭션은 다루지 않음
-
-➡️ 본 구조는 **현실적인 레거시 개선과 운영 안정성**을 우선한 선택임
-
----
-
-## 정리
-
-## 🧩 Domain Model (Minimal Example)
-
-본 프로젝트는 도메인을 시스템의 중심(One Core)으로 두는 구조를 검증하기 위해  
-**의도적으로 1~2개의 핵심 도메인만 구현**했습니다.  
-비즈니스 규칙은 서비스나 컨트롤러가 아닌 도메인 내부에만 존재하며 외부 연동과 확장은 이벤트 기반으로 분리됩니다.
+**목적:** 외부 레거시 시스템의 파편화된 규격(`cm`, `m`, 다른 JSON 구조)이 코어 도메인으로 침투하는 것을 방어
 
 ```java
-// Aggregate Root
-public class Order {
+// Adapter Layer (외부 -> 내부 변환기)
+@Component
+public class LegacyObservationMapper {
+    
+    // 외부 시스템 A의 Payload (cm 단위 사용)
+    public WaterObservation toDomain(SystemAPayload payload) {
+        // 1. 방어적 프로그래밍: 비정상 데이터 원천 차단
+        if (payload.getWaterLevelCm() < 0) {
+            throw new InvalidObservationException("수위는 음수일 수 없습니다.");
+        }
 
-    private final OrderId id;
-    private OrderStatus status;
-
-    public Order(OrderId id) {
-        this.id = id;
-        this.status = OrderStatus.CREATED;
-        DomainEvents.raise(new OrderCreatedEvent(id));
-    }
-
-    public void complete() {
-        this.status = OrderStatus.COMPLETED;
-        DomainEvents.raise(new OrderCompletedEvent(id));
-    }
-}
-// Domain Event
-public class OrderCompletedEvent {
-
-    private final OrderId orderId;
-
-    public OrderCompletedEvent(OrderId orderId) {
-        this.orderId = orderId;
+        // 2. 단위 정규화: cm -> 코어 표준 단위인 m로 변환
+        double standardLevelMeters = payload.getWaterLevelCm() / 100.0;
+        
+        // 3. 순수 도메인 객체(Aggregate) 생성하여 반환
+        return new WaterObservation(
+            new ObservationId(payload.getId()),
+            new StationId(payload.getStationCode()),
+            new WaterLevel(standardLevelMeters)
+        );
     }
 }
+```
+---
+
+## 2. Aggregate Root & Policy 추상화 (OCP 준수)
+
+**목적:** 코어 비대화를 막기 위해 지역마다 다른 '위험 수위 경보 규칙'을 인터페이스로 분리하여 런타임에 주입
+
+```java
+// 1. 순수 도메인 (Aggregate Root) - 비즈니스 규칙의 중심
+public class WaterObservation {
+    private final ObservationId id;
+    private final WaterLevel level;
+
+    // 외부에서 의존성(Policy)을 주입받아 다형성 활용
+    public boolean isDangerousStatus(WaterWarningPolicy policy) {
+        return policy.isDangerous(this.level);
+    }
+}
+
+// 2. 정책 인터페이스 (Core Domain)
+public interface WaterWarningPolicy {
+    boolean isDangerous(WaterLevel level);
+}
+
+// 3. 정책 구현체 (새로운 지역 추가 시 기존 코드 수정 없이 클래스만 추가)
+public class UrbanAreaWarningPolicy implements WaterWarningPolicy {
+    @Override
+    public boolean isDangerous(WaterLevel level) {
+        return level.getMeters() >= 3.5; // 도심 지역은 3.5m부터 위험
+    }
+}
+
+public class RuralAreaWarningPolicy implements WaterWarningPolicy {
+    @Override
+    public boolean isDangerous(WaterLevel level) {
+        return level.getMeters() >= 5.0; // 농어촌 지역은 5.0m부터 위험
+    }
+}
+
+```
+---
+
+## 3. DB Indexing 전략 (실행 계획 기반 튜닝)
+
+**목적:** 복잡한 수자원 데이터 조회 성능을 극대화하기 위해 실제 쿼리 패턴에 맞춘 인덱스 적용
+
+```
+-- 1. Composite Index (복합 인덱스)
+-- 쿼리 패턴: WHERE station_id = ? AND observe_time BETWEEN ? AND ?
+-- 카디널리티가 높은 관측소 ID를 선행 컬럼으로 배치
+CREATE INDEX idx_observation_station_time 
+ON water_observations (station_id, observe_time DESC);
+
+-- 2. Partial GIN Index (부분 GIN 인덱스)
+-- 목적: JSONB 확장 필드 검색 속도 향상 및 디스크 오버헤드 통제
+-- 방어 전략: 특정 메타데이터가 존재하는 로우(Row)에만 인덱스 생성
+CREATE INDEX idx_observation_metadata_gin 
+ON water_observations USING GIN (metadata_jsonb)
+WHERE metadata_jsonb ? 'sensor_error_code';
+
+```
+---
+
+## 4. Cache-Aside Pattern (디스크 I/O 방어)
+
+**목적:** Read-Heavy 트래픽의 디스크 접근을 차단하고 3배의 성능 향상을 끌어낸 Redis 캐싱 계층 구현
+
+```java
+// Application Layer (Use Case)
+@Service
+@RequiredArgsConstructor
+public class ObservationQueryService {
+
+    private final RedisCacheAdapter redisCache;
+    private final ObservationRepository dbRepository;
+
+    public ObservationDto getLatestObservation(String stationId) {
+        String cacheKey = "station:latest:" + stationId;
+
+        // 1. Cache 조회 (Redis)
+        return redisCache.get(cacheKey)
+            .orElseGet(() -> {
+                // 2. Cache Miss 발생 시 DB에서 조회 (Fallback)
+                ObservationDto dto = dbRepository.findLatestByStationId(stationId)
+                    .orElseThrow(() -> new NotFoundException());
+                
+                // 3. DB 결과를 Cache에 적재 (TTL 5분 설정으로 정합성 유지)
+                redisCache.put(cacheKey, dto, Duration.ofMinutes(5));
+                return dto;
+            });
+    }
+}
+
+```
