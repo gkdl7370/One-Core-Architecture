@@ -98,21 +98,35 @@
 
 ---
 
-## 📦 패키지 구조
+## 📦 패키지 구조(예시)
 
 ```
+단순한 계층형(Layered) 구조를 탈피하고, 의존성이 바깥에서 안쪽(Core)으로만 향하도록 아키텍처를 물리적 디렉토리로 강제했습니다.
+
+```text
 one-core-architecture
 ├── core
-│   ├── domain         # [순수 도메인] 기술 프레임워크 의존성 제로 (Aggregate, Policy Interface)
-│   ├── application    # [유스케이스] 도메인 객체 및 Rule Engine 오케스트레이션
-│   └── infrastructure # [구현체] DB, 메시징, Rule Data Load 등 외부 연동 로직
-├── adapter
-│   ├── in             # [Driving] REST API, Event Listener 등 진입점
-│   └── out            # [Driven] 레거시 외부 시스템 연동, DB Repository 어댑터
+│   ├── domain                     # [순수 도메인] 기술 프레임워크 의존성 제로 (POJO)
+│   │   ├── aggregate              # WaterObservation (수자원 관측 데이터 Aggregate Root)
+│   │   ├── policy                 # UnitConversionPolicy (단위 변환), ValidationPolicy (검증 룰 인터페이스)
+│   │   └── exception              # InvalidObservationException (비즈니스 예외 격리)
+│   │
+│   └── application                # [유스케이스] 도메인 룰 오케스트레이션
+│       ├── port                   # [인터페이스] in (IntegrateDataUseCase), out (LoadRulePort, SaveObservationPort)
+│       └── service                # [구현체] WaterIntegrationService (핵심 비즈니스 흐름 제어)
+│
+├── adapter                        # [인프라 연동] 외부 기술 및 DB, 캐시 구현체
+│   ├── in
+│   │   └── web                    # [REST API] WaterObservationController (외부 데이터 수신 진입점)
+│   │
+│   └── out
+│       ├── persistence            # [RDBMS] ObservationJpaEntity, ObservationRepositoryAdapter (복합/GIN 인덱스 튜닝)
+│       ├── cache                  # [Redis] RedisObservationCacheAdapter (조회 병목 해결용 Cache-Aside 구현)
+│       └── external               # [Legacy 연동] LegacySystemClient, AntiCorruptionMapper (이기종 데이터 정규화)
+│
 └── docs
-    ├── architecture.md # 시스템 구조도 및 C4 모델
-    ├── domain-model.md # 통합 도메인 모델(Aggregate) 정의서
-    └── decisions.md    # ADR (Architecture Decision Records)
+    ├── architecture.md            # 시스템 구조도 및 데이터 정합성 보장 전략
+    └── decisions.md               # ADR (샤딩 배제 이유, Redis 도입 등 기술적 의사결정 기록)
 ```
 
 ---
