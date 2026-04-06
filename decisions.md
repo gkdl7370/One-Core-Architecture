@@ -125,3 +125,5 @@ public class ObservationQueryService {
 }
 
 ```
+
+> 본 문서의 코드 예시는 `src/main/java/com/onecore/` 경로의 실제 구현체를 기반으로 합니다.
