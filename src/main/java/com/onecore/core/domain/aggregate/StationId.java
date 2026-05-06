@@ -8,12 +8,14 @@ public class StationId {
 
     public StationId(String code) {
         if (code == null || code.isBlank()) {
-            throw new IllegalArgumentException("StationId는 비어있을 수 없습니다.");
+            throw new IllegalArgumentException("StationId must not be blank.");
         }
         this.code = code;
     }
 
-    public String getCode() { return code; }
+    public String getCode() {
+        return code;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -23,5 +25,7 @@ public class StationId {
     }
 
     @Override
-    public int hashCode() { return Objects.hash(code); }
+    public int hashCode() {
+        return Objects.hash(code);
+    }
 }

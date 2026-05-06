@@ -4,8 +4,7 @@ import com.onecore.core.domain.aggregate.WaterLevel;
 import org.springframework.stereotype.Component;
 
 /**
- * 농어촌 지역 경보 정책
- * 농경지 특성상 5.0m 초과 시 위험으로 판단
+ * Warning policy for rural or low-density stations.
  */
 @Component
 public class RuralAreaWarningPolicy implements WaterWarningPolicy {

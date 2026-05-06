@@ -19,7 +19,7 @@ class WaterObservationTest {
     private final RuralAreaWarningPolicy ruralPolicy = new RuralAreaWarningPolicy();
 
     @Test
-    @DisplayName("레거시 cm 단위 수위를 m 단위로 정규화한다")
+    @DisplayName("normalizes legacy centimeter payloads into meters")
     void shouldNormalizeCmToMeters() {
         SystemAPayload payload = new SystemAPayload("obs-001", "STN-A", 350.0);
 
@@ -29,7 +29,7 @@ class WaterObservationTest {
     }
 
     @Test
-    @DisplayName("도심 지역 정책은 3.5m 이상을 위험으로 판단한다")
+    @DisplayName("marks urban observations as dangerous at 3.5m or higher")
     void shouldBeDangerousInUrbanAreaWhenLevelExceedsThreshold() {
         SystemAPayload payload = new SystemAPayload("obs-002", "STN-B", 360.0);
         WaterObservation observation = mapper.toDomain(payload);
@@ -38,7 +38,7 @@ class WaterObservationTest {
     }
 
     @Test
-    @DisplayName("농어촌 지역 정책은 3.6m를 안전으로 판단한다")
+    @DisplayName("keeps rural observations safe below the rural threshold")
     void shouldBeSafeInRuralAreaWhenLevelIsBelowThreshold() {
         SystemAPayload payload = new SystemAPayload("obs-003", "STN-C", 360.0);
         WaterObservation observation = mapper.toDomain(payload);
@@ -47,7 +47,7 @@ class WaterObservationTest {
     }
 
     @Test
-    @DisplayName("음수 수위 데이터는 거부한다")
+    @DisplayName("rejects negative water-level payloads")
     void shouldThrowExceptionWhenWaterLevelIsNegative() {
         SystemAPayload invalidPayload = new SystemAPayload("obs-004", "STN-D", -10.0);
 

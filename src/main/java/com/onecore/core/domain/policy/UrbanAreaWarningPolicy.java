@@ -4,8 +4,7 @@ import com.onecore.core.domain.aggregate.WaterLevel;
 import org.springframework.stereotype.Component;
 
 /**
- * 도심 지역 경보 정책
- * 인프라 밀집으로 3.5m 초과 시 위험으로 판단
+ * Warning policy for dense urban stations.
  */
 @Component
 public class UrbanAreaWarningPolicy implements WaterWarningPolicy {

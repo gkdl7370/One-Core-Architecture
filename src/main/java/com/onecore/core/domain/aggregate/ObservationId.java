@@ -8,7 +8,7 @@ public class ObservationId {
 
     public ObservationId(String value) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("ObservationId는 비어있을 수 없습니다.");
+            throw new IllegalArgumentException("ObservationId must not be blank.");
         }
         this.value = value;
     }
