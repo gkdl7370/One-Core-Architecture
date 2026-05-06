@@ -9,7 +9,7 @@ public class WaterLevel {
     public WaterLevel(double meters) {
         if (meters < 0) {
             throw new InvalidObservationException(
-                    "수위는 음수일 수 없습니다: " + meters
+                    "Water level must not be negative: " + meters
             );
         }
         this.meters = meters;

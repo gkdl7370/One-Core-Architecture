@@ -9,7 +9,8 @@ import com.onecore.core.domain.policy.UrbanAreaWarningPolicy;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class WaterObservationTest {
 
@@ -18,7 +19,7 @@ class WaterObservationTest {
     private final RuralAreaWarningPolicy ruralPolicy = new RuralAreaWarningPolicy();
 
     @Test
-    @DisplayName("레거시 시스템 A의 cm 단위 수위가 m로 정규화된다")
+    @DisplayName("레거시 cm 단위 수위를 m 단위로 정규화한다")
     void shouldNormalizeCmToMeters() {
         SystemAPayload payload = new SystemAPayload("obs-001", "STN-A", 350.0);
 
@@ -28,7 +29,7 @@ class WaterObservationTest {
     }
 
     @Test
-    @DisplayName("도심 지역 정책: 3.5m 이상이면 위험으로 판단한다")
+    @DisplayName("도심 지역 정책은 3.5m 이상을 위험으로 판단한다")
     void shouldBeDangerousInUrbanAreaWhenLevelExceedsThreshold() {
         SystemAPayload payload = new SystemAPayload("obs-002", "STN-B", 360.0);
         WaterObservation observation = mapper.toDomain(payload);
@@ -37,7 +38,7 @@ class WaterObservationTest {
     }
 
     @Test
-    @DisplayName("농어촌 지역 정책: 3.5m는 안전으로 판단한다")
+    @DisplayName("농어촌 지역 정책은 3.6m를 안전으로 판단한다")
     void shouldBeSafeInRuralAreaWhenLevelIsBelowThreshold() {
         SystemAPayload payload = new SystemAPayload("obs-003", "STN-C", 360.0);
         WaterObservation observation = mapper.toDomain(payload);
@@ -46,12 +47,12 @@ class WaterObservationTest {
     }
 
     @Test
-    @DisplayName("음수 수위 데이터는 예외를 발생시킨다")
+    @DisplayName("음수 수위 데이터는 거부한다")
     void shouldThrowExceptionWhenWaterLevelIsNegative() {
         SystemAPayload invalidPayload = new SystemAPayload("obs-004", "STN-D", -10.0);
 
         assertThatThrownBy(() -> mapper.toDomain(invalidPayload))
                 .isInstanceOf(InvalidObservationException.class)
-                .hasMessageContaining("음수");
+                .hasMessageContaining("negative");
     }
 }
